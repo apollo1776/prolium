@@ -1,0 +1,504 @@
+// Prisma Schema for CreatorAI Authentication & OAuth System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Platform {
+  YOUTUBE
+  TIKTOK
+  INSTAGRAM
+  GOOGLE
+  X
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?   // Nullable for OAuth-only users
+  name          String?
+  emailVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLogin     DateTime?
+
+  // Profile fields
+  country       String?
+  timezone      String?
+  phone         String?
+  bio           String?
+  profilePicture String?
+
+  // Security fields
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean  @default(false)
+  backupCodes      String[] @default([])
+
+  // Stripe integration
+  stripeCustomerId String?
+
+  sessions            Session[]
+  platformConnections PlatformConnection[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  autoReplyRules      AutoReplyRule[]
+  chatSessions        ChatSession[]
+  agentTasks          AgentTask[]
+  brandMemory         BrandMemory?
+  posts               Post[]
+  analytics           Analytics[]
+  subscriptions       Subscription[]
+  paymentMethods      PaymentMethod[]
+  preferences         UserPreferences?
+  pushSubscriptions   PushSubscription[]
+  dataExportLogs      DataExportLog[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model ChatSession {
+  id             String        @id @default(cuid())
+  userId         String
+  sessionName    String?
+  isActive       Boolean       @default(true)
+  lastActivityAt DateTime      @default(now())
+  context        Json          @default("{}")
+  createdAt      DateTime      @default(now())
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages       ChatMessage[]
+
+  @@index([userId])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id           String      @id @default(cuid())
+  sessionId    String
+  role         String      // 'user' | 'agent' | 'system'
+  content      String      @db.Text
+  messageType  String      @default("text")
+  agentContext Json?
+  timestamp    DateTime    @default(now())
+  session      ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("chat_messages")
+}
+
+model AgentTask {
+  id                String    @id @default(cuid())
+  userId            String
+  sessionId         String?
+  type              String
+  status            String    @default("planned")
+  priority          Int       @default(3)
+  instruction       String    @db.Text
+  description       String    @db.Text
+  assignedModule    String
+  moduleInput       Json      @default("{}")
+  moduleOutput      Json?
+  scheduledFor      DateTime?
+  completedAt       DateTime?
+  errorMessage      String?
+  createdAt         DateTime  @default(now())
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("agent_tasks")
+}
+
+model BrandMemory {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  brandName        String   @default("")
+  industry         String   @default("")
+  targetAudience   String   @default("")
+  brandVoice       String   @default("")
+  keyMessages      String[]
+  prohibitedTopics String[]
+  platforms        String[]
+  extraContext     String   @default("") @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("brand_memory")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  token        String   @unique
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  ipAddress    String?
+  userAgent    String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([refreshToken])
+  @@map("sessions")
+}
+
+model PlatformConnection {
+  id               String    @id @default(uuid())
+  userId           String
+  platform         Platform
+  accessToken      String    // Encrypted in application layer
+  refreshToken     String?   // Encrypted in application layer
+  tokenExpiresAt   DateTime?
+  platformUserId   String
+  platformUsername String?
+  scopesGranted    String[]
+  connectedAt      DateTime  @default(now())
+  lastSynced       DateTime?
+  isActive         Boolean   @default(true)
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissions Permission[]
+
+  @@unique([userId, platform])
+  @@index([userId])
+  @@index([platform])
+  @@map("platform_connections")
+}
+
+model Permission {
+  id              String   @id @default(uuid())
+  connectionId    String
+  permissionType  String
+  granted         Boolean
+  requestedAt     DateTime @default(now())
+
+  connection PlatformConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId])
+  @@map("permissions")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  used      Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@map("password_reset_tokens")
+}
+
+model AuthAttempt {
+  id        String   @id @default(uuid())
+  email     String
+  success   Boolean
+  ipAddress String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+  @@index([ipAddress, createdAt])
+  @@map("auth_attempts")
+}
+
+model OAuthAttempt {
+  id          String   @id @default(uuid())
+  userId      String?
+  platform    Platform
+  success     Boolean
+  error       String?
+  ipAddress   String
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([platform, createdAt])
+  @@map("oauth_attempts")
+}
+
+// Auto-Reply System Models
+
+enum TriggerType {
+  KEYWORD      // Simple keyword matching
+  SEMANTIC     // AI-powered intent matching
+  SENTIMENT    // Trigger on positive/negative sentiment
+  QUESTION     // Trigger when comment is a question
+  MENTION      // When someone mentions the creator
+}
+
+enum MatchMode {
+  EXACT          // Exact match only
+  CONTAINS       // Contains the keyword
+  STARTS_WITH    // Starts with keyword
+  REGEX          // Regex pattern
+  AI_SIMILARITY  // OpenAI embedding similarity
+}
+
+enum ResponseAction {
+  REPLY_COMMENT  // Post a reply to the comment
+  SEND_DM        // Send direct message (Instagram only)
+  SEND_LINK      // Reply with a link
+  LOG_ONLY       // Just log, no response (for testing)
+  WEBHOOK        // Call external webhook with data
+}
+
+// Auto-reply rule created by user
+model AutoReplyRule {
+  id       String  @id @default(cuid())
+  userId   String
+  name     String // "Course Giveaway", "FAQ Response"
+  isActive Boolean @default(true)
+
+  // Trigger Configuration
+  triggerType          TriggerType @default(KEYWORD)
+  keywords             String[] // ["COURSE", "course", "send course"]
+  matchMode            MatchMode   @default(CONTAINS)
+  caseSensitive        Boolean     @default(false)
+  aiSimilarityThreshold Float?     @default(0.8) // For semantic matching
+
+  // Scope - which videos/platforms
+  platforms Platform[] // [YOUTUBE, INSTAGRAM]
+  videoIds  String[] // Empty = all videos, or specific video IDs
+
+  // Response Configuration
+  responseAction   ResponseAction @default(REPLY_COMMENT)
+  responseTemplate String // "Hi {{username}}! Here's your link: {{customLink}}"
+  customLink       String? // URL to include
+  attachmentUrl    String? // PDF or file URL for DM
+
+  // Rate Limiting
+  maxResponsesPerDay Int @default(100)
+  minDelaySeconds    Int @default(30)
+  maxDelaySeconds    Int @default(120)
+
+  // Filters
+  skipNegativeSentiment Boolean @default(true)
+  skipSpam              Boolean @default(true)
+  onlyVerifiedUsers     Boolean @default(false)
+  minFollowerCount      Int? // Only respond to users with X+ followers
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs AutoReplyLog[]
+
+  @@index([userId, isActive])
+  @@map("auto_reply_rules")
+}
+
+// Log of all auto-reply actions
+model AutoReplyLog {
+  id     String @id @default(cuid())
+  ruleId String
+
+  // Source
+  platform        Platform
+  videoId         String
+  commentId       String
+  commentText     String
+  commentAuthor   String
+  commentAuthorId String
+
+  // Matching
+  matchedKeyword    String?
+  aiConfidenceScore Float?
+  sentimentScore    Float?
+
+  // Response
+  responseAction ResponseAction
+  responseSent   Boolean        @default(false)
+  responseText   String?
+  responseId     String? // Platform's response ID
+  errorMessage   String?
+
+  // Timestamps
+  triggeredAt DateTime  @default(now())
+  respondedAt DateTime?
+
+  // Relations
+  rule AutoReplyRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId, triggeredAt])
+  @@index([platform, videoId])
+  @@map("auto_reply_logs")
+}
+
+// Track processed comments to avoid duplicates
+model ProcessedComment {
+  id          String   @id @default(cuid())
+  platform    Platform
+  commentId   String   @unique
+  videoId     String
+  processedAt DateTime @default(now())
+
+  @@index([platform, videoId])
+  @@map("processed_comments")
+}
+
+// Daily usage tracking for rate limiting
+model DailyUsage {
+  id             String   @id @default(cuid())
+  userId         String
+  ruleId         String
+  date           DateTime @db.Date
+  responsesCount Int      @default(0)
+
+  @@unique([ruleId, date])
+  @@index([userId, date])
+  @@map("daily_usage")
+}
+
+// Posts scheduled/published
+model Post {
+  id           String    @id @default(uuid())
+  userId       String
+  platform     Platform
+  content      String    @db.Text
+  scheduledFor DateTime?
+  publishedAt  DateTime?
+  status       String    @default("draft") // draft, scheduled, published, failed
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("posts")
+}
+
+// Analytics data
+model Analytics {
+  id         String   @id @default(uuid())
+  userId     String
+  platform   Platform
+  metricType String   // views, likes, comments, shares, etc.
+  value      Float
+  recordedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, recordedAt])
+  @@index([platform])
+  @@map("analytics")
+}
+
+// GDPR data export logs
+model DataExportLog {
+  id         String   @id @default(uuid())
+  userId     String
+  exportPath String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("data_export_logs")
+}
+
+// GDPR account deletion logs (kept for audit)
+model AccountDeletionLog {
+  id        String   @id @default(uuid())
+  userId    String
+  email     String
+  deletedAt DateTime
+  reason    String?
+
+  @@index([deletedAt])
+  @@map("account_deletion_logs")
+}
+
+// Stripe subscriptions
+model Subscription {
+  id                   String    @id @default(uuid())
+  userId               String
+  stripeSubscriptionId String    @unique
+  stripePriceId        String
+  status               String    // active, canceled, past_due, etc.
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+// Payment methods
+model PaymentMethod {
+  id                    String   @id @default(uuid())
+  userId                String
+  stripePaymentMethodId String   @unique
+  type                  String   // card, bank_account
+  last4                 String
+  brand                 String   // visa, mastercard, etc.
+  expiryMonth           Int
+  expiryYear            Int
+  isDefault             Boolean  @default(false)
+  createdAt             DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("payment_methods")
+}
+
+// User preferences
+model UserPreferences {
+  id                      String   @id @default(uuid())
+  userId                  String   @unique
+  notificationPreferences Json     @default("{}")
+  appearancePreferences   Json     @default("{}")
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+// Push notification subscriptions
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String   @unique
+  keys      Json
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"poll-worker.d.ts","sourceRoot":"","sources":["../../src/workers/poll-worker.ts"],"names":[],"mappings":"AAAA;;;GAGG;AAEH,OAAO,EAAE,MAAM,EAAO,MAAM,QAAQ,CAAC;AAOrC,UAAU,WAAW;IACnB,MAAM,EAAE,MAAM,CAAC;CAChB;AAED;;GAEG;AACH,eAAO,MAAM,UAAU,kCAuBtB,CAAC"}
