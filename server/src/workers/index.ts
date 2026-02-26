@@ -18,6 +18,10 @@ const prisma = new PrismaClient();
  */
 const schedulePollJobs = async () => {
   try {
+        if (!commentPollQueue) {
+                console.log('[Scheduler] Redis not available, skipping poll scheduling');
+                return;
+        }
     // Find all users with active auto-reply rules
     const usersWithRules = await prisma.autoReplyRule.findMany({
       where: {
