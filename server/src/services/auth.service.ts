@@ -41,7 +41,7 @@ export class AuthService {
         email,
         passwordHash,
         name,
-        emailVerified: false,
+        emailVerified: true,
       },
     });
 
@@ -57,9 +57,12 @@ export class AuthService {
       },
     });
 
-    // Send verification email
-    await EmailService.sendVerificationEmail(email, name || 'there', verificationToken);
-
+        // Send verification email (non-blocking - don't fail registration if email fails)
+            try {
+                        await EmailService.sendVerificationEmail(email, name || 'there', verificationToken);
+            } catch (emailError) {
+                        console.warn('Failed to send verification email, but registration succeeded:', emailError);
+            }
     return {
       id: user.id,
       email: user.email,
