@@ -7,7 +7,7 @@ import axios, { AxiosInstance } from 'axios';
 
 const createApiClient = (): AxiosInstance => {
   const client = axios.create({
-    baseURL: '/api',
+          baseURL: import.meta.env.VITE_API_URL || '/api',
     withCredentials: true, // Send cookies with requests
     headers: {
       'Content-Type': 'application/json',
