@@ -455,7 +455,7 @@ export const analyzeYouTubeComments = async (req: Request, res: Response) => {
       const analysis = await aiAnalysisService.analyzeComments(commentsToAnalyze);
 
       res.json({
-        success: true,
+        success: true
         hasData: true,
         analysis,
         commentCount: allComments.length,
@@ -591,7 +591,7 @@ export const getYouTubeHistoricalData = async (req: Request, res: Response) => {
             const zeroRow = [date];
             // Add zeros for each metric (views, likes, comments, shares, subscribersGained, subscribersLost)
             for (let i = 1; i < (analytics.columnHeaders?.length || 7); i++) {
-              zeroRow.push(0);
+              zeroRow.push('0');
             }
             return zeroRow;
           }
@@ -819,7 +819,7 @@ export const getYouTubeHistoricalData = async (req: Request, res: Response) => {
 
         // Convert to YouTube Analytics format
         const rows = Object.entries(viewsByDate)
-          .sort(([a], [b]) => a.localeCompare(b))
+          .sort(([a], [b]) => String(a).localeCompare(String(b)))
           .map(([date, views]) => [date, views]);
 
         console.log(`[Analytics] Fallback successful: returning ${rows.length} data points`);
