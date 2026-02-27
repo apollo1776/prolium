@@ -455,7 +455,7 @@ export const analyzeYouTubeComments = async (req: Request, res: Response) => {
       const analysis = await aiAnalysisService.analyzeComments(commentsToAnalyze);
 
       res.json({
-        success: true
+        success: true,
         hasData: true,
         analysis,
         commentCount: allComments.length,
