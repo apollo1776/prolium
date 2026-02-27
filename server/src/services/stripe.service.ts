@@ -1,4 +1,4 @@
-⚠️/**
+/**
  * Stripe Payment Service
  * Handles subscriptions and payment methods
  */
@@ -15,7 +15,7 @@ if (process.env.STRIPE_SECRET_KEY) {
     apiVersion: '2026-01-28.clover',
   });
 } else {
-  console.warn('⚠️  Stripe not configured. Payment features will be disabled.');
+  console.warn('  Stripe not configured. Payment features will be disabled.');
   console.warn('   To enable: Add STRIPE_SECRET_KEY to .env');
 }
 
