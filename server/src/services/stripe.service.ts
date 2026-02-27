@@ -169,7 +169,7 @@ export class StripeService {
 
     return {
       success: true,
-      endsAt: new Date(stripeSubscription.current_period_end * 1000),
+      endsAt: new Date((stripeSubscription as any).current_period_end * 1000),
     };
   }
 
@@ -404,8 +404,8 @@ export class StripeService {
       where: { id: dbSubscription.id },
       data: {
         status: stripeSubscription.status,
-        currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+        currentPeriodStart: new Date((stripeSubscription as any).current_period_start * 1000),
+        currentPeriodEnd: new Date((stripeSubscription as any).current_period_end * 1000),
         cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
       },
     });
