@@ -88,6 +88,21 @@ const AppContent: React.FC = () => {
       // Clean URL immediately so user can try again
       window.history.replaceState({}, '', window.location.pathname);
 
+          // Check for email verification result
+          const emailVerifiedParam = params.get('success');
+          if (window.location.pathname.includes('email-verified') && emailVerifiedParam !== null) {
+                  setOauthNotification({
+                            show: true,
+                            type: emailVerifiedParam === 'true' ? 'success' : 'error',
+                            platform: 'Email',
+                            message: emailVerifiedParam === 'true'
+                                        ? 'Your email has been verified! You can now log in.'
+                                        : 'Email verification failed. Please try again or contact support.',
+                            username: undefined,
+                  });
+                  setTimeout(() => { setOauthNotification(null); }, 10000);
+          }
+
       // Auto-hide notification after 8 seconds
       setTimeout(() => {
         setOauthNotification(null);
