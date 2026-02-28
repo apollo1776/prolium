@@ -76,7 +76,7 @@ export class EmailService {
         name: string,
         verificationToken: string
       ): Promise<void> {
-        const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
+        const verificationUrl = `${process.env.API_URL || 'https://api.prolium.app'}/api/auth/verify-email/${verificationToken}`;
         const from = process.env.EMAIL_FROM || 'noreply@proliumai.com';
 
       try {
