@@ -6,11 +6,13 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
 import {
-  getYouTubeAnalysis,
-  getYouTubeStats,
-  getCrossPlatformInsights,
-  analyzeYouTubeComments,
-  getYouTubeHistoricalData,
+    getYouTubeAnalysis,
+    getYouTubeStats,
+    getCrossPlatformInsights,
+    analyzeYouTubeComments,
+    getYouTubeHistoricalData,
+    getXStats,
+    getXAnalysis,
 } from '../controllers/analytics.controller';
 
 const router = Router();
@@ -32,5 +34,9 @@ router.get('/youtube/comments', analyzeYouTubeComments);
 
 // Get cross-platform insights
 router.get('/insights', getCrossPlatformInsights);
+
+// X (Twitter) analytics
+router.get('/x/stats', getXStats);
+router.get('/x', getXAnalysis);
 
 export default router;
