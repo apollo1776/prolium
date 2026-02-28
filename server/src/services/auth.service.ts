@@ -41,7 +41,7 @@ export class AuthService {
         email,
         passwordHash,
         name,
-        emailVerified: true,
+        emailVerified: false,
       },
     });
 
