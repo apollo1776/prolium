@@ -15,7 +15,11 @@ const createApiClient = (): AxiosInstance => {
 
       // Response interceptor for automatic token refresh
       client.interceptors.response.use(
-              (response) => response,
+              (response) => {
+          // Clear auth failure flag on any successful response
+          sessionStorage.removeItem('auth_failed');
+          return response;
+      },
               async (error) => {
                         const originalRequest = error.config;
 
@@ -32,12 +36,14 @@ const createApiClient = (): AxiosInstance => {
                 const isRefreshEndpoint = url.includes('/auth/refresh-token');
 
                 // If 401 and not already retried and not a login/register endpoint
-                if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+                if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint && !sessionStorage.getItem('auth_failed')) {
                             originalRequest._retry = true;
 
                           // Don't try to refresh if the refresh endpoint itself failed
                           if (isRefreshEndpoint) {
                                         console.log('[API Client] Refresh token failed, redirecting to login');
+                                        // Clear auth state to prevent infinite reload loop
+                                        sessionStorage.setItem('auth_failed', 'true');
                                         window.location.href = '/';
                                         return Promise.reject(error);
                           }
@@ -45,18 +51,21 @@ const createApiClient = (): AxiosInstance => {
                           try {
                                         console.log('[API Client] Access token expired, refreshing...');
                                         // Try to refresh the token
-                              await axios.post('/api/auth/refresh-token', {}, {
-                                              baseURL: '',
+                              await axios.post('/auth/refresh-token', {}, {
+                                              baseURL: import.meta.env.VITE_API_URL || '/api',
                                               withCredentials: true,
                               });
 
                               console.log('[API Client] Token refreshed successfully, retrying request');
+                              sessionStorage.removeItem('auth_failed');
                                         // Retry the original request
                               return client(originalRequest);
                           } catch (refreshError) {
                                         console.log('[API Client] Token refresh failed, user needs to log in again');
                                         // Refresh failed, redirect to login
-                              window.location.href = '/';
+                              // Clear auth state to prevent infinite reload loop
+                                        sessionStorage.setItem('auth_failed', 'true');
+                                        window.location.href = '/';
                                         return Promise.reject(refreshError);
                           }
                 }
