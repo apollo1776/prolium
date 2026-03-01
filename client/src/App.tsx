@@ -17,13 +17,11 @@ import {
   LogOut,
   Sparkles,
   Music2,
-  Camera,
-  Bot
+  Camera
 } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Collaborations from './components/Collaborations';
 import AutoReply from './components/AutoReply';
-import Autopilot from './components/Autopilot';
 import AgentChat from './components/AgentChat';
 import VideoLab from './components/VideoLab';
 import Trends from './components/Trends';
@@ -39,7 +37,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-type View = 'dashboard' | 'agent' | 'autopilot' | 'collabs' | 'replies' | 'video' | 'trends' | 'scheduler' | 'newsletter' | 'youtube-insights' | 'tiktok-insights' | 'instagram-insights' | 'x-insights' | 'account';
+type View = 'dashboard' | 'agent' | 'collabs' | 'replies' | 'video' | 'trends' | 'scheduler' | 'newsletter' | 'youtube-insights' | 'tiktok-insights' | 'instagram-insights' | 'x-insights' | 'account';
 type AuthView = 'login' | 'register';
 
 const AppContent: React.FC = () => {
@@ -135,7 +133,6 @@ const AppContent: React.FC = () => {
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'agent', label: 'AI Agent', icon: Sparkles },
-        { id: 'autopilot', label: 'Autopilot', icon: Bot },
         { id: 'scheduler', label: 'Schedule', icon: Calendar },
       ],
     },
@@ -395,7 +392,6 @@ const AppContent: React.FC = () => {
           <div className="max-w-7xl mx-auto">
             {currentView === 'dashboard' && <Dashboard onNavigate={(view) => setCurrentView(view as View)} />}
             {currentView === 'agent' && <AgentChat />}
-            {currentView === 'autopilot' && <Autopilot />}
             {currentView === 'youtube-insights' && <YouTubeInsights />}
             {currentView === 'tiktok-insights' && <TikTokInsights />}
             {currentView === 'instagram-insights' && <InstagramInsights />}
