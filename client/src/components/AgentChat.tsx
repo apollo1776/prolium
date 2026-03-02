@@ -102,7 +102,7 @@ const formatRelative = (ts: string) => {
 
 // ── Generated Post Card ─────────────────────────────────────────
 
-const PostCard: React.FC<{ post: GeneratedPost; onPost?: (post: GeneratedPost, key?: string) => void; posting?: boolean; posted?: boolean }> = ({ post, onPost, posting, posted }) => {
+const PostCard: React.FC<{ post: GeneratedPost; onPost?: (post: GeneratedPost, key?: string) => void; onSchedule?: (post: GeneratedPost) => void; posting?: boolean; posted?: boolean }> = ({ post, onPost, onSchedule, posting, posted }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -136,25 +136,35 @@ const PostCard: React.FC<{ post: GeneratedPost; onPost?: (post: GeneratedPost, k
             </span>
           )}
           {onPost && post.platform.toLowerCase() === 'x' && (
-              <button
-                onClick={() => onPost(post)}
-                disabled={posting || posted}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-                  posted
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    : posting
-                    ? 'bg-gray-800 text-gray-500 cursor-wait'
-                    : 'bg-emerald-500 hover:bg-emerald-600 text-black'
-                }`}
-              >
-                {posted ? (
-                  <><Check className="w-3 h-3" /> Posted</>
-                ) : posting ? (
-                  <><Loader2 className="w-3 h-3 animate-spin" /> Posting...</>
-                ) : (
-                  <><Send className="w-3 h-3" /> Post to X</>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => onPost(post)}
+                  disabled={posting || posted}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                    posted
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : posting
+                      ? 'bg-gray-800 text-gray-500 cursor-wait'
+                      : 'bg-emerald-500 hover:bg-emerald-600 text-black'
+                  }`}
+                >
+                  {posted ? (
+                    <><Check className="w-3 h-3" /> Posted</>
+                  ) : posting ? (
+                    <><Loader2 className="w-3 h-3 animate-spin" /> Posting...</>
+                  ) : (
+                    <><Send className="w-3 h-3" /> Post Now</>
+                  )}
+                </button>
+                {!posted && !posting && onSchedule && (
+                  <button
+                    onClick={() => onSchedule(post)}
+                    className="px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
+                  >
+                    <Clock className="w-3 h-3" /> Schedule
+                  </button>
                 )}
-              </button>
+              </div>
             )}
             <button
             onClick={handleCopy}
@@ -183,7 +193,7 @@ const PostCard: React.FC<{ post: GeneratedPost; onPost?: (post: GeneratedPost, k
 
 // ── Message Bubble ───────────────────────────────────────────────
 
-const MessageBubble: React.FC<{ msg: ChatMessage; generatedContent?: GeneratedPost[]; onPost?: (post: GeneratedPost, key?: string) => void; postingStates?: Record<string, string> }> = ({ msg, generatedContent, onPost, postingStates }) => {
+const MessageBubble: React.FC<{ msg: ChatMessage; generatedContent?: GeneratedPost[]; onPost?: (post: GeneratedPost, key?: string) => void; onSchedule?: (post: GeneratedPost) => void; postingStates?: Record<string, string> }> = ({ msg, generatedContent, onPost, onSchedule, postingStates }) => {
   const isUser = msg.role === 'user';
 
   return (
@@ -206,7 +216,7 @@ const MessageBubble: React.FC<{ msg: ChatMessage; generatedContent?: GeneratedPo
         {!isUser && generatedContent && generatedContent.length > 0 && (
           <div className="w-full mt-1 space-y-2">
             {generatedContent.map((post, i) => (
-              <PostCard key={i} post={post} onPost={onPost ? () => onPost(post, msg.id + '-' + i) : undefined} posting={postingStates?.[msg.id + '-' + i] === 'posting'} posted={postingStates?.[msg.id + '-' + i] === 'posted'} />
+              <PostCard key={i} post={post} onPost={onPost ? () => onPost(post, msg.id + '-' + i) : undefined} onSchedule={onSchedule} posting={postingStates?.[msg.id + '-' + i] === 'posting'} posted={postingStates?.[msg.id + '-' + i] === 'posted'} />
             ))}
           </div>
         )}
@@ -581,6 +591,22 @@ const AgentChat: React.FC = () => {
     }
   };
 
+  const handleSchedulePost = (post: GeneratedPost) => {
+    // Navigate to schedule page with post data pre-filled
+    const postData = {
+      platform: post.platform,
+      content: post.caption,
+      hashtags: post.hashtags,
+    };
+    // Store in sessionStorage for the scheduler to pick up
+    sessionStorage.setItem('scheduledPost', JSON.stringify(postData));
+    // For now, show a prompt for scheduling
+    const dateStr = prompt('Schedule for when? (e.g. "2026-03-03 10:00 AM")');
+    if (dateStr) {
+      alert('Post scheduled for ' + dateStr + '! (Scheduler integration coming soon)');
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -778,6 +804,7 @@ const AgentChat: React.FC = () => {
                   msg={msg}
                   generatedContent={messageContent[msg.id]}
                   onPost={handlePostToX}
+                  onSchedule={handleSchedulePost}
                   postingStates={postingStates}
                 />
               ))}
