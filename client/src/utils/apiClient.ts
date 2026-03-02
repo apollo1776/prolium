@@ -110,6 +110,16 @@ export const platformApi = {
 };
 
 // ========================================
+// Posts API
+// ========================================
+export const postsApi = {
+  publishPost: (data: { platform: string; content: string; hashtags?: string[]; taskId?: string }) =>
+    apiClient.post('/posts/publish', data),
+  getHistory: () =>
+    apiClient.get('/posts/history'),
+};
+
+// ========================================
 // OAuth API
 // ========================================
 export const oauthApi = {
