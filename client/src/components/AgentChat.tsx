@@ -102,7 +102,7 @@ const formatRelative = (ts: string) => {
 
 // ── Generated Post Card ─────────────────────────────────────────
 
-const PostCard: React.FC<{ post: GeneratedPost }> = ({ post }) => {
+const PostCard: React.FC<{ post: GeneratedPost; onPost?: (post: GeneratedPost, key?: string) => void; posting?: boolean; posted?: boolean }> = ({ post, onPost, posting, posted }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -183,7 +183,7 @@ const PostCard: React.FC<{ post: GeneratedPost }> = ({ post }) => {
 
 // ── Message Bubble ───────────────────────────────────────────────
 
-const MessageBubble: React.FC<{ msg: ChatMessage; generatedContent?: GeneratedPost[] }> = ({ msg, generatedContent }) => {
+const MessageBubble: React.FC<{ msg: ChatMessage; generatedContent?: GeneratedPost[]; onPost?: (post: GeneratedPost, key?: string) => void; postingStates?: Record<string, string> }> = ({ msg, generatedContent, onPost, postingStates }) => {
   const isUser = msg.role === 'user';
 
   return (
@@ -206,7 +206,7 @@ const MessageBubble: React.FC<{ msg: ChatMessage; generatedContent?: GeneratedPo
         {!isUser && generatedContent && generatedContent.length > 0 && (
           <div className="w-full mt-1 space-y-2">
             {generatedContent.map((post, i) => (
-              <PostCard key={i} post={post} />
+              <PostCard key={i} post={post} onPost={onPost ? () => onPost(post, msg.id + '-' + i) : undefined} posting={postingStates?.[msg.id + '-' + i] === 'posting'} posted={postingStates?.[msg.id + '-' + i] === 'posted'} />
             ))}
           </div>
         )}
@@ -393,6 +393,7 @@ const AgentChat: React.FC = () => {
   const [brandMemory, setBrandMemory] = useState<Partial<BrandMemory>>({});
   const [showSidebar, setShowSidebar] = useState(true);
   const [agentStatus, setAgentStatus] = useState<any>(null);
+  const [postingStates, setPostingStates] = useState<Record<string, string>>({});
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -561,6 +562,22 @@ const AgentChat: React.FC = () => {
       loadAgentStatus();
     } catch (err) {
       console.error('Failed to save brand memory:', err);
+    }
+  };
+
+  const handlePostToX = async (post: GeneratedPost, key?: string) => {
+    const stateKey = key || 'post-' + Date.now();
+    setPostingStates(prev => ({ ...prev, [stateKey]: 'posting' }));
+    try {
+      await postsApi.publishPost({
+        platform: post.platform,
+        content: post.caption,
+        hashtags: post.hashtags,
+      });
+      setPostingStates(prev => ({ ...prev, [stateKey]: 'posted' }));
+    } catch (err: any) {
+      console.error('[Agent] Post failed:', err);
+      setPostingStates(prev => ({ ...prev, [stateKey]: 'error' }));
     }
   };
 
