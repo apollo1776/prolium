@@ -29,6 +29,7 @@ import agentRoutes from './routes/agent.routes';
 import gdprRoutes from './routes/gdpr.routes';
 import stripeRoutes from './routes/stripe.routes';
 import preferencesRoutes from './routes/preferences.routes';
+import postRoutes from './routes/post.routes';
 
 EncryptionService.initialize();
 TokenService.initialize();
@@ -88,6 +89,7 @@ app.use('/api/agent', agentRoutes);
 app.use('/api/gdpr', gdprRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/preferences', preferencesRoutes);
+app.use('/api/posts', postRoutes);
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
