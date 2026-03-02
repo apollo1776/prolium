@@ -16,7 +16,7 @@ export const postController = {
    */
   async publishPost(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.userId;
       const { platform, content, hashtags, taskId } = req.body;
 
       if (!platform || !content?.trim()) {
@@ -107,7 +107,7 @@ export const postController = {
    */
   async getHistory(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.userId;
       const posts = await prisma.post.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
