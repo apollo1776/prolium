@@ -15,7 +15,7 @@ export const agentController = {
 
   async createSession(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.userId;
       const { sessionName } = req.body;
       const session = await agentService.createSession(userId, sessionName);
       res.json({ session });
@@ -27,7 +27,7 @@ export const agentController = {
 
   async getSessions(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.userId;
       const sessions = await agentService.getSessions(userId);
       res.json({ sessions });
     } catch (err: any) {
@@ -38,7 +38,7 @@ export const agentController = {
 
   async getSession(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.userId;
       const { id } = req.params;
       const session = await agentService.getSession(userId, id);
       if (!session) return res.status(404).json({ error: 'Session not found' });
@@ -51,7 +51,7 @@ export const agentController = {
 
   async deleteSession(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.userId;
       const { id } = req.params;
       await agentService.deleteSession(userId, id);
       res.json({ success: true });
@@ -65,7 +65,7 @@ export const agentController = {
 
   async sendMessage(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.userId;
       const { sessionId, message } = req.body;
 
       if (!sessionId || !message?.trim()) {
@@ -106,7 +106,7 @@ export const agentController = {
 
   async getTasks(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.userId;
       const tasks = await agentService.getTasks(userId);
       res.json({ tasks });
     } catch (err: any) {
@@ -119,7 +119,7 @@ export const agentController = {
 
   async getBrandMemory(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.userId;
       const memory = await agentService.getBrandMemory(userId);
       res.json({ memory });
     } catch (err: any) {
@@ -130,7 +130,7 @@ export const agentController = {
 
   async updateBrandMemory(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.userId;
       const data = req.body;
       await agentService.saveBrandMemory(userId, data);
       res.json({ success: true });
@@ -144,7 +144,7 @@ export const agentController = {
 
   async generateContent(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.userId;
       const { topic, platforms, quantity, contentType, additionalInstructions } = req.body;
 
       if (!topic || !platforms?.length) {
@@ -170,7 +170,7 @@ export const agentController = {
 
   async getStatus(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.userId;
       const [pendingTasks, totalSessions, brandMemory] = await Promise.all([
         prisma.agentTask.count({ where: { userId, status: { in: ['planned', 'in_progress'] } } }),
         prisma.chatSession.count({ where: { userId, isActive: true } }),
