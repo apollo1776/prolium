@@ -21,8 +21,10 @@ import {
   Video,
   Music2,
   Twitter,
+  ExternalLink,
+  AlertTriangle,
 } from 'lucide-react';
-import { apiClient } from '../utils/apiClient';
+import { apiClient, postsApi } from '../utils/apiClient';
 
 // ── Types ───────────────────────────────────────────────────────
 
@@ -133,7 +135,28 @@ const PostCard: React.FC<{ post: GeneratedPost }> = ({ post }) => {
               <Clock className="w-3 h-3" /> {post.bestTime}
             </span>
           )}
-          <button
+          {onPost && post.platform.toLowerCase() === 'x' && (
+              <button
+                onClick={() => onPost(post)}
+                disabled={posting || posted}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  posted
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    : posting
+                    ? 'bg-gray-800 text-gray-500 cursor-wait'
+                    : 'bg-emerald-500 hover:bg-emerald-600 text-black'
+                }`}
+              >
+                {posted ? (
+                  <><Check className="w-3 h-3" /> Posted</>
+                ) : posting ? (
+                  <><Loader2 className="w-3 h-3 animate-spin" /> Posting...</>
+                ) : (
+                  <><Send className="w-3 h-3" /> Post to X</>
+                )}
+              </button>
+            )}
+            <button
             onClick={handleCopy}
             className="p-1.5 rounded-lg bg-black/40 text-gray-500 hover:text-white transition-all"
             title="Copy caption + hashtags"
@@ -737,6 +760,8 @@ const AgentChat: React.FC = () => {
                   key={msg.id}
                   msg={msg}
                   generatedContent={messageContent[msg.id]}
+                  onPost={handlePostToX}
+                  postingStates={postingStates}
                 />
               ))}
               {sending && (
